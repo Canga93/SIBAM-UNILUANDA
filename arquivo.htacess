@@ -1,0 +1,25 @@
+RewriteEngine On
+
+# Redirecionar para HTTPS (descomente se tiver SSL)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Remover extensão .php das URLs
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^(.*)$ $1.php [NC,L]
+
+# Página de erro 404
+ErrorDocument 404 /404.php
+
+# Proteger arquivos sensíveis
+<Files ~ "\.(env|json|config.js|md|gitignore|gitattributes|lock)$">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Proteger diretórios
+<Directory ~ "\.git">
+    Order allow,deny
+    Deny from all
+</Directory>
