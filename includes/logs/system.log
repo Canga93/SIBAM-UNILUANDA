@@ -1,0 +1,82 @@
+[2025-08-30 10:51:48] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2025-08-30 11:07:58] [INFO] User activity: login_success {"user_id":2,"details":"Login realizado com sucesso"}
+[2025-08-30 11:08:44] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2025-08-30 12:17:50] [INFO] User activity: login_failed {"user_id":null,"details":"Tentativa de login falhou: admin@uniluanda.edu.ao"}
+[2025-08-30 12:17:59] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2025-08-30 20:03:58] [INFO] User activity: login_success {"user_id":2,"details":"Login realizado com sucesso"}
+[2025-08-30 21:18:23] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2025-08-30 21:33:07] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2025-08-30 22:01:32] [INFO] User activity: login_success {"user_id":2,"details":"Login realizado com sucesso"}
+[2025-08-31 03:55:29] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2025-09-01 13:39:57] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2025-09-08 20:09:21] [INFO] User activity: login_success {"user_id":2,"details":"Login realizado com sucesso"}
+[2025-09-08 20:11:43] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2025-09-08 21:02:22] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2025-09-08 21:54:35] [INFO] User activity: login_success {"user_id":2,"details":"Login realizado com sucesso"}
+[2025-09-08 21:55:19] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2025-09-10 13:43:13] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2025-09-20 06:40:10] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2025-09-30 10:28:14] [INFO] User activity: login_success {"user_id":2,"details":"Login realizado com sucesso"}
+[2025-10-31 22:59:26] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2025-11-23 13:17:29] [INFO] User activity: login_failed {"user_id":null,"details":"Tentativa de login falhou: admin@uniluanda.edu.ao"}
+[2025-11-23 13:17:30] [INFO] User activity: login_failed {"user_id":null,"details":"Tentativa de login falhou: admin@uniluanda.edu.ao"}
+[2025-11-23 13:17:47] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2025-12-26 21:51:26] [INFO] User activity: login_failed {"user_id":null,"details":"Tentativa de login falhou: admin@uniluanda.edu.ao"}
+[2025-12-26 21:51:44] [INFO] User activity: login_failed {"user_id":null,"details":"Tentativa de login falhou: admin@uniluanda.edu.ao"}
+[2025-12-26 21:51:55] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2025-12-26 23:36:01] [INFO] User activity: login_failed {"user_id":null,"details":"Tentativa de login falhou: bela@uniluanda.edu.ao"}
+[2025-12-26 23:36:12] [INFO] User activity: login_success {"user_id":2,"details":"Login realizado com sucesso"}
+[2025-12-27 13:27:46] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2025-12-27 21:37:41] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-01 18:43:35] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-01 20:48:10] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-01 20:54:00] [INFO] User activity: login_success {"user_id":3,"details":"Login realizado com sucesso"}
+[2026-01-01 21:18:06] [INFO] User activity: login_failed {"user_id":null,"details":"Tentativa de login falhou: admin@uniluanda.edu.ao"}
+[2026-01-01 21:18:21] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-01 21:49:14] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-01 21:51:17] [INFO] User activity: login_failed {"user_id":null,"details":"Tentativa de login falhou: bela@uniluanda.edu.ao"}
+[2026-01-01 21:51:29] [INFO] User activity: login_success {"user_id":2,"details":"Login realizado com sucesso"}
+[2026-01-01 22:43:04] [INFO] User activity: login_success {"user_id":2,"details":"Login realizado com sucesso"}
+[2026-01-02 08:23:57] [INFO] User activity: login_success {"user_id":2,"details":"Login realizado com sucesso"}
+[2026-01-02 16:06:45] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-02 16:08:15] [INFO] User activity: login_success {"user_id":2,"details":"Login realizado com sucesso"}
+[2026-01-03 08:42:22] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-03 08:45:52] [INFO] User activity: login_success {"user_id":2,"details":"Login realizado com sucesso"}
+[2026-01-03 08:57:08] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-03 09:03:01] [INFO] User activity: login_success {"user_id":2,"details":"Login realizado com sucesso"}
+[2026-01-03 15:08:08] [INFO] User activity: login_success {"user_id":2,"details":"Login realizado com sucesso"}
+[2026-01-03 15:10:59] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-03 15:57:06] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-03 16:05:50] [INFO] User activity: login_failed {"user_id":null,"details":"Tentativa de login falhou: joao.silva@uniluanda.edu.ao"}
+[2026-01-03 16:08:44] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-03 16:12:45] [INFO] User activity: login_success {"user_id":2,"details":"Login realizado com sucesso"}
+[2026-01-03 16:24:18] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-03 22:21:24] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-03 23:13:49] [INFO] User activity: login_success {"user_id":6,"details":"Login realizado com sucesso"}
+[2026-01-03 23:14:42] [INFO] User activity: login_success {"user_id":2,"details":"Login realizado com sucesso"}
+[2026-01-03 23:18:45] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-04 09:09:32] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-04 09:15:48] [INFO] User activity: login_success {"user_id":8,"details":"Login realizado com sucesso"}
+[2026-01-04 09:20:00] [INFO] User activity: login_success {"user_id":7,"details":"Login realizado com sucesso"}
+[2026-01-04 09:36:48] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-04 09:42:17] [INFO] User activity: login_success {"user_id":6,"details":"Login realizado com sucesso"}
+[2026-01-04 09:48:31] [INFO] User activity: login_success {"user_id":5,"details":"Login realizado com sucesso"}
+[2026-01-04 09:52:17] [INFO] User activity: login_failed {"user_id":null,"details":"Tentativa de login falhou: admin@uniluanda.edu.ao"}
+[2026-01-04 09:52:49] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-04 10:42:12] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-04 10:48:57] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-04 13:32:09] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-06 15:34:39] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-06 15:52:04] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-09 12:08:43] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-18 14:21:20] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-21 08:40:57] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-21 08:53:57] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-21 09:36:02] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-23 18:26:15] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-27 11:30:48] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-27 11:31:38] [INFO] User activity: login_success {"user_id":2,"details":"Login realizado com sucesso"}
+[2026-01-27 11:33:12] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-29 21:16:12] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-01-31 20:44:59] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
+[2026-02-01 22:37:19] [INFO] User activity: login_success {"user_id":1,"details":"Login realizado com sucesso"}
