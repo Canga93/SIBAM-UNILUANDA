@@ -1,3 +1,19 @@
+<?php
+// processa_contato.php
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['enviar_mensagem'])) {
+    $nome = $_POST['nome'] ?? '';
+    $email = $_POST['email'] ?? '';
+    $assunto = $_POST['assunto'] ?? '';
+    $mensagem = $_POST['mensagem'] ?? '';
+    
+    if (!empty($nome) && !empty($email) && !empty($assunto) && !empty($mensagem)) {
+        // Inserir no banco
+        $stmt = $db->prepare("INSERT INTO mensagens (nome, email, assunto, mensagem, ip) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$nome, $email, $assunto, $mensagem, $_SERVER['REMOTE_ADDR']]);
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -98,6 +114,7 @@
     }
     </style>
 <body>
+    
     <div class="col-md-3 col-lg-2 bg-dark text-white vh-100 position-fixed" id="sidebar">
     <div class="p-3">
         <h5 class="text-center mb-4">Painel Administrativo</h5>
@@ -116,6 +133,14 @@
                 <a href="usuarios.php" class="nav-link text-white">
                     <i class="fas fa-users me-2"></i>Usuários
                 </a>
+            </li>
+             </li>
+            <li class="nav-item">
+            <a class="nav-link text-white" href="mensagens.php">
+            <i class="fas fa-envelope me-2"></i>Mensagens
+            <?php if (isset($mensagensNaoLidas) && $mensagensNaoLidas > 0): ?>
+                <span class="badge bg-danger float-end"><?php echo $mensagensNaoLidas; ?></span>
+            <?php endif; ?></a>
             </li>
             <li class="nav-item">
                 <a href="relatorios.php" class="nav-link text-white">

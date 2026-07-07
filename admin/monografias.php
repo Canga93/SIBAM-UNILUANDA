@@ -394,7 +394,7 @@ foreach ($stats as $s) $statusCounts[$s['status']] = $s['count'];
                                 <tbody>
                                 <?php foreach ($monografias as $m): ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($m['titulo']); ?><br><small><?php echo htmlspecialchars($m['area']); ?></small></td>
+                                    <td><?php echo htmlspecialchars($m['titulo']); ?><br><small><?php echo htmlspecialchars($m['curso']); ?></small></td>
                                     <td><?php echo htmlspecialchars($m['autor']); ?><br><small><?php echo htmlspecialchars($m['autor_email']); ?></small></td>
                                     <td><?php echo formatDate($m['data_submissao']); ?></td>
                                     <td><span class="badge bg-<?php echo $m['status']=='aprovado'?'success':($m['status']=='rejeitado'?'danger':'warning'); ?>"><?php echo ucfirst($m['status']); ?></span></td>

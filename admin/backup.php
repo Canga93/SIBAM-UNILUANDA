@@ -8,7 +8,7 @@ class BackupSystem {
     
     public function __construct($db, $backup_path = '../backups/') {
         $this->conn = $db;
-        $this->backup_path = $backup_path;
+        $this->backup_path = rtrim($backup_path, '/') . '/';
         
         // Criar diretório de backups se não existir
         if (!file_exists($this->backup_path)) {
@@ -16,7 +16,16 @@ class BackupSystem {
         }
     }
     
-    // Criar backup do banco de dados
+    /**
+     * Retorna o caminho absoluto para a pasta de backups
+     */
+    public function getBackupPath() {
+        return $this->backup_path;
+    }
+    
+    /**
+     * Cria um backup completo do banco de dados
+     */
     public function create_database_backup() {
         try {
             $timestamp = date('Y-m-d_H-i-s');
@@ -26,24 +35,25 @@ class BackupSystem {
             // Obter todas as tabelas
             $tables = $this->conn->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
             
-            $backup_content = "";
+            $backup_content = "-- Backup gerado em " . date('d/m/Y H:i:s') . "\n\n";
+            $backup_content .= "SET FOREIGN_KEY_CHECKS = 0;\n\n";
             
             foreach ($tables as $table) {
-                // Obter estrutura da tabela
+                // Estrutura da tabela
                 $create_table = $this->conn->query("SHOW CREATE TABLE $table")->fetch(PDO::FETCH_ASSOC);
+                $backup_content .= "DROP TABLE IF EXISTS `$table`;\n";
                 $backup_content .= $create_table['Create Table'] . ";\n\n";
                 
-                // Obter dados da tabela
+                // Dados da tabela
                 $data = $this->conn->query("SELECT * FROM $table")->fetchAll(PDO::FETCH_ASSOC);
-                
                 if (!empty($data)) {
-                    $backup_content .= "INSERT INTO $table VALUES ";
+                    $backup_content .= "INSERT INTO `$table` VALUES \n";
                     
                     $rows = [];
                     foreach ($data as $row) {
                         $values = array_map(function($value) {
                             if ($value === null) return 'NULL';
-                            return "'" . addslashes($value) . "'";
+                            return $this->conn->quote($value);
                         }, $row);
                         
                         $rows[] = "(" . implode(', ', $values) . ")";
@@ -52,6 +62,8 @@ class BackupSystem {
                     $backup_content .= implode(",\n", $rows) . ";\n\n";
                 }
             }
+            
+            $backup_content .= "SET FOREIGN_KEY_CHECKS = 1;\n";
             
             // Salvar arquivo
             if (file_put_contents($filepath, $backup_content)) {
@@ -76,7 +88,9 @@ class BackupSystem {
         }
     }
     
-    // Restaurar backup
+    /**
+     * Restaura um backup a partir de um arquivo .sql
+     */
     public function restore_database_backup($filepath) {
         try {
             if (!file_exists($filepath)) {
@@ -85,11 +99,22 @@ class BackupSystem {
             
             $sql = file_get_contents($filepath);
             
-            // Desativar chaves estrangeiras temporariamente
+            // Remove comentários e divide as queries
+            $sql = preg_replace('/^--.*$/m', '', $sql);
+            $queries = array_filter(array_map('trim', explode(";\n", $sql)));
+            
+            // Desativar chaves estrangeiras
             $this->conn->exec("SET FOREIGN_KEY_CHECKS = 0");
             
-            // Executar queries
-            $this->conn->exec($sql);
+            $this->conn->beginTransaction();
+            
+            foreach ($queries as $query) {
+                if (!empty($query)) {
+                    $this->conn->exec($query);
+                }
+            }
+            
+            $this->conn->commit();
             
             // Reativar chaves estrangeiras
             $this->conn->exec("SET FOREIGN_KEY_CHECKS = 1");
@@ -97,6 +122,11 @@ class BackupSystem {
             return ['success' => true];
             
         } catch (Exception $e) {
+            if ($this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
+            $this->conn->exec("SET FOREIGN_KEY_CHECKS = 1");
+            
             return [
                 'success' => false,
                 'error' => $e->getMessage()
@@ -104,7 +134,9 @@ class BackupSystem {
         }
     }
     
-    // Listar backups disponíveis
+    /**
+     * Lista todos os backups disponíveis
+     */
     public function list_backups() {
         $backups = [];
         $files = glob($this->backup_path . 'backup_*.sql');
@@ -126,41 +158,45 @@ class BackupSystem {
         return $backups;
     }
     
-    // Excluir backup
+    /**
+     * Exclui um arquivo de backup
+     */
     public function delete_backup($filename) {
         $filepath = $this->backup_path . $filename;
-        
-        if (file_exists($filepath)) {
-            return unlink($filepath);
-        }
-        
-        return false;
+        return file_exists($filepath) ? unlink($filepath) : false;
     }
 }
 
-// Processar ações de backup
+// Instanciar sistema de backup
 $backup_system = new BackupSystem($db);
+$backup_path = $backup_system->getBackupPath(); // caminho completo com '/'
+
 $message = '';
 
+// Processar ações
 if (isset($_POST['action'])) {
     switch ($_POST['action']) {
         case 'create_backup':
             $result = $backup_system->create_database_backup();
             if ($result['success']) {
-                $message = '<div class="alert alert-success">Backup criado com sucesso: ' . $result['filename'] . '</div>';
+                $message = '<div class="alert alert-success">Backup criado com sucesso: ' . htmlspecialchars($result['filename']) . '</div>';
             } else {
-                $message = '<div class="alert alert-danger">Erro ao criar backup: ' . $result['error'] . '</div>';
+                $message = '<div class="alert alert-danger">Erro ao criar backup: ' . htmlspecialchars($result['error']) . '</div>';
             }
             break;
             
         case 'restore_backup':
             if (!empty($_POST['backup_file'])) {
-                $result = $backup_system->restore_database_backup($this->backup_path . $_POST['backup_file']);
+                // Usa o caminho obtido do objeto
+                $filepath = $backup_path . $_POST['backup_file'];
+                $result = $backup_system->restore_database_backup($filepath);
                 if ($result['success']) {
                     $message = '<div class="alert alert-success">Backup restaurado com sucesso!</div>';
                 } else {
-                    $message = '<div class="alert alert-danger">Erro ao restaurar backup: ' . $result['error'] . '</div>';
+                    $message = '<div class="alert alert-danger">Erro ao restaurar backup: ' . htmlspecialchars($result['error']) . '</div>';
                 }
+            } else {
+                $message = '<div class="alert alert-warning">Nenhum arquivo selecionado para restauração.</div>';
             }
             break;
             
@@ -186,7 +222,6 @@ $backups = $backup_system->list_backups();
     <title>Backup do Sistema - Painel Administrativo</title>
 </head>
 <body>
-    
     
     <div class="container-fluid py-4">
         <div class="row">
@@ -286,9 +321,8 @@ $backups = $backup_system->list_backups();
                                                                     <i class="fas fa-trash me-1"></i>Excluir
                                                                 </button>
                                                             </form>
-                                                            <a href="<?php echo $backup['filepath']; ?>" 
-                                                               class="btn btn-sm btn-outline-primary"
-                                                               download>
+                                                            <a href="download_backup.php?file=<?php echo urlencode($backup['filename']); ?>" 
+                                                               class="btn btn-sm btn-outline-primary">
                                                                 <i class="fas fa-download me-1"></i>Download
                                                             </a>
                                                         </div>

@@ -16,23 +16,19 @@ $statsQuery = "SELECT
     (SELECT COUNT(*) FROM monografias WHERE data_publicacao >= DATE_SUB(NOW(), INTERVAL 30 DAY)) as monografias_recentes,
     (SELECT COUNT(*) FROM monografias WHERE data_submissao >= DATE_SUB(NOW(), INTERVAL 7 DAY)) as monografias_semana,
     (SELECT COUNT(*) FROM usuarios WHERE data_criacao >= DATE_SUB(NOW(), INTERVAL 30 DAY)) as usuarios_recentes,
-    (SELECT COUNT(*) FROM support_tickets WHERE status = 'aberto') as tickets_abertos,
-    (SELECT COUNT(*) FROM scheduled_tasks WHERE status = 'pending' AND scheduled_date <= NOW()) as tarefas_pendentes,
     (SELECT COUNT(*) FROM system_logs WHERE created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)) as logs_24h,
     (SELECT COUNT(*) FROM galerias) as total_galerias,
     (SELECT COUNT(*) FROM galerias WHERE status = 'ativo') as galerias_ativas,
     (SELECT COUNT(*) FROM galerias WHERE status = 'inativo') as galerias_inativas,
-    (SELECT COUNT(*) FROM galerias WHERE data_criacao >= DATE_SUB(NOW(), INTERVAL 7 DAY)) as galerias_recentes";  // REMOVI O PONTO E VÍRGULA DAQUI
-    
+    (SELECT COUNT(*) FROM galerias WHERE data_criacao >= DATE_SUB(NOW(), INTERVAL 7 DAY)) as galerias_recentes,
+    (SELECT COUNT(*) FROM mensagens WHERE status = 'nao lida') as mensagens_abertas"; 
 try {
     $stats = $db->query($statsQuery)->fetch(PDO::FETCH_ASSOC);
     
-    // Verificar se o array foi retornado corretamente
     if (!$stats) {
         $stats = [];
     }
 } catch (Exception $e) {
-    // Se houver erro na query, cria array com valores padrão
     $stats = [
         'total_usuarios' => 0,
         'total_monografias' => 0,
@@ -42,19 +38,21 @@ try {
         'monografias_recentes' => 0,
         'monografias_semana' => 0,
         'usuarios_recentes' => 0,
-        'tickets_abertos' => 0,
         'tarefas_pendentes' => 0,
         'logs_24h' => 0,
         'total_galerias' => 0,
         'galerias_ativas' => 0,
         'galerias_inativas' => 0,
-        'galerias_recentes' => 0
+        'galerias_recentes' => 0,
+        'mensagens_abertas' => 0   
     ];
     error_log("Erro na query de estatísticas: " . $e->getMessage());
 }
 
 // Adicionar valor padrão para total_imagens (que não existe na query acima)
 $stats['total_imagens'] = $stats['total_galerias'] ?? 0;
+
+// (Opcional) Podemos usar a variável $mensagensNaoLidas separada, mas vamos usar o stats diretamente
 
 // Estatísticas por área 
 try {
@@ -271,6 +269,100 @@ $systemUsage = [
         border-bottom: 1px solid #eee;
         font-weight: 600;
     }
+
+    /* ============================================================
+       📱 RESPONSIVIDADE - SUPORTE A TODOS OS TIPOS DE TELA
+       ============================================================ */
+    .chart-container {
+        position: relative;
+        width: 100%;
+        height: 260px;
+    }
+
+    @media (min-width: 768px) {
+        .chart-container {
+            height: 320px;
+        }
+    }
+
+    /* Tablets e telemóveis grandes */
+    @media (max-width: 991.98px) {
+        .dashboard-container {
+            padding: 15px;
+        }
+    }
+
+    /* Telemóveis */
+    @media (max-width: 767.98px) {
+        .dashboard-container {
+            padding: 12px;
+        }
+
+        .dashboard-header h2 {
+            font-size: 1.4rem;
+        }
+
+        .dashboard-header-actions {
+            width: 100%;
+        }
+
+        .dashboard-header-actions .btn {
+            flex: 1 1 auto;
+            font-size: 0.8rem;
+            padding: 0.5rem 0.6rem;
+            white-space: nowrap;
+        }
+
+        .stats-card .card-title {
+            font-size: 1.3rem;
+        }
+
+        .stats-card .card-text {
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-card .card-body {
+            padding: 1rem 0.75rem;
+        }
+
+        .stats-card .fa-2x {
+            font-size: 1.3em;
+        }
+
+        .stats-card small {
+            font-size: 0.7rem;
+        }
+
+        .health-value {
+            font-size: 1.1rem;
+        }
+
+        .health-item {
+            padding: 0.6rem;
+        }
+
+        .quick-action-btn {
+            font-size: 0.85rem;
+            padding: 0.5rem 0.75rem;
+        }
+
+        .real-time-widget {
+            padding: 1rem;
+        }
+    }
+
+    /* Telemóveis pequenos */
+    @media (max-width: 400px) {
+        .stats-card .card-title {
+            font-size: 1.1rem;
+        }
+
+        .dashboard-header-actions .btn span,
+        .dashboard-header-actions .btn {
+            font-size: 0.75rem;
+        }
+    }
     </style>
 </head> 
 
@@ -280,17 +372,17 @@ $systemUsage = [
         <div class="row">
             <?php include 'sidebar.php'; ?>
             
-            <div class="col-md-9 col-lg-10 ms-auto p-0">
+            <div class="col-12 col-md-9 col-lg-10 ms-auto p-0">
                 <div class="dashboard-container">
                     <!-- TÍTULO E BOTÕES -->
-                    <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2 dashboard-header">
                         <div>
                             <h2 class="mb-0">Dashboard Administrativo</h2>
                             <small class="text-muted"><?php echo date('d/m/Y H:i:s'); ?></small>
                         </div>
 
-                        <div>
-                            <button class="btn btn-outline-primary me-2" onclick="window.print()">
+                        <div class="d-flex flex-wrap gap-2 dashboard-header-actions">
+                            <button class="btn btn-outline-primary" onclick="window.print()">
                                 <i class="fas fa-print me-1"></i>Imprimir Relatório
                             </button>
 
@@ -303,12 +395,12 @@ $systemUsage = [
                     <!-- ========== MONITORAMENTO EM TEMPO REAL ========== -->
                     <div class="real-time-widget mb-4">
                         <div class="row">
-                            <div class="col-md-8">
+                            <div class="col-12 col-md-8">
                                 <h5><i class="fas fa-heartbeat me-2"></i>Monitoramento do Sistema</h5>
 
                                 <div class="row mt-3">
                                     <?php foreach(['CPU' => 'cpu', 'Memória' => 'memory', 'Disco' => 'disk', 'Uptime (h)' => 'uptime'] as $label => $key): ?>
-                                    <div class="col-md-3 mb-3">
+                                    <div class="col-6 col-md-3 mb-3">
                                         <div class="health-item">
                                             <div><?php echo $label; ?></div>
                                             <div class="health-value">
@@ -327,7 +419,7 @@ $systemUsage = [
                             </div>
 
                             <!-- AÇÕES RÁPIDAS -->
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <h5><i class="fas fa-bolt me-2"></i>Ações Rápidas</h5>
                                 <div class="quick-actions mt-3">
                                     <a href="monografias.php?status=pendente" class="quick-action-btn bg-warning">
@@ -345,6 +437,13 @@ $systemUsage = [
                                     <a href="relatorios.php" class="quick-action-btn bg-primary">
                                         <i class="fas fa-chart-bar me-1"></i>Relatórios
                                     </a>
+                                    <a href="mensagens.php" class="quick-action-btn bg-secondary">
+                                        <i class="fas fa-envelope me-1"></i>Ver Mensagens
+                                            <?php if (($stats['mensagens_abertas'] ?? 0) > 0): ?>
+                                                <span class="badge bg-danger ms-2"><?php echo $stats['mensagens_abertas']; ?></span>
+                                        <?php endif; ?>
+                                        
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -358,13 +457,12 @@ $systemUsage = [
                             ['title'=>'Monografias','value'=>$stats['total_monografias'] ?? 0,'icon'=>'book','class'=>'success','sub'=>($stats['monografias_recentes'] ?? 0).' recentes','link'=>'monografias.php'],
                             ['title'=>'Pendentes','value'=>$stats['monografias_pendentes'] ?? 0,'icon'=>'clock','class'=>'warning','sub'=>($stats['monografias_semana'] ?? 0).' esta semana','link'=>'monografias.php?status=pendente'],
                             ['title'=>'Aprovadas','value'=>$stats['monografias_aprovadas'] ?? 0,'icon'=>'check-circle','class'=>'info','sub'=>($stats['monografias_rejeitadas'] ?? 0).' rejeitadas','link'=>'monografias.php?status=aprovado'],
-                            // CARD DE GALERIAS ADICIONADO AQUI
                             ['title'=>'Galerias','value'=>$stats['total_galerias'] ?? 0,'icon'=>'images','class'=>'purple','sub'=>($stats['galerias_ativas'] ?? 0).' ativas, '.($stats['galerias_inativas'] ?? 0).' inativas','link'=>'galeriaAdmin.php'],
-                            ['title'=>'Tickets','value'=>$stats['tickets_abertos'] ?? 0,'icon'=>'ticket-alt','class'=>'danger','sub'=>'Abertos','link'=>'support_tickets.php'],
+                            ['title'=>'Mensagens','value'=>$stats['mensagens_abertas'] ?? 0,'icon'=>'envelope','class'=>'danger','sub'=>'Não lidas','link'=>'mensagens.php'],
                         ];
 
                         foreach($cards as $c): ?>
-                        <div class="col-md-6 col-lg-4 col-xl-2 mb-3">
+                        <div class="col-6 col-md-6 col-lg-4 col-xl-2 mb-3">
                             <div class="card stats-card bg-<?php echo $c['class']; ?> text-white" onclick="window.location.href='<?php echo $c['link']; ?>'">
                                 <div class="card-body text-center">
                                     <h5 class="card-title"><?php echo $c['value']; ?></h5>
@@ -379,7 +477,7 @@ $systemUsage = [
 
                     <!-- ========== ESTATÍSTICAS DE GALERIAS ========== -->
                     <div class="row mb-4">
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <div class="card">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Estatísticas de Galerias</h5>
@@ -387,15 +485,15 @@ $systemUsage = [
                                 </div>
                                 <div class="card-body">
                                     <div class="row text-center">
-                                        <div class="col-md-4 mb-3">
+                                        <div class="col-4 col-md-4 mb-3">
                                             <div class="display-6 text-primary"><?php echo $stats['total_galerias'] ?? 0; ?></div>
                                             <p class="text-muted">Total</p>
                                         </div>
-                                        <div class="col-md-4 mb-3">
+                                        <div class="col-4 col-md-4 mb-3">
                                             <div class="display-6 text-success"><?php echo $stats['galerias_ativas'] ?? 0; ?></div>
                                             <p class="text-muted">Ativas</p>
                                         </div>
-                                        <div class="col-md-4 mb-3">
+                                        <div class="col-4 col-md-4 mb-3">
                                             <div class="display-6 text-info"><?php echo $stats['total_imagens'] ?? 0; ?></div>
                                             <p class="text-muted">Imagens</p>
                                         </div>
@@ -416,18 +514,18 @@ $systemUsage = [
                             </div>
                         </div>
                         
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <div class="card">
                                 <div class="card-header">
                                     <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Análise Preditiva</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
-                                        <div class="col-md-6 text-center">
+                                        <div class="col-12 col-md-6 text-center">
                                             <div class="display-4 text-primary"><?php echo $previsao_proximo_mes; ?></div>
                                             <p class="text-muted">Previsão de submissões</p>
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-12 col-md-6">
                                             <p><strong>Indicadores baseados em IA</strong></p>
                                             <div class="progress mb-2">
                                                 <div class="progress-bar bg-success" style="width: 70%">Crescimento: +10%</div>
@@ -447,14 +545,16 @@ $systemUsage = [
 
                     <!-- ========== GRÁFICOS ========== -->
                     <div class="row mb-4">
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <div class="card">
                                 <div class="card-header">
                                     <h5 class="mb-0">Estatísticas Mensais de Submissões</h5>
                                 </div>
                                 <div class="card-body">
                                     <?php if (!empty($monthlyStats)): ?>
-                                        <canvas id="monthlyChart"></canvas>
+                                        <div class="chart-container">
+                                            <canvas id="monthlyChart"></canvas>
+                                        </div>
                                     <?php else: ?>
                                         <p class="text-center text-muted py-4">Sem dados disponíveis</p>
                                     <?php endif; ?>
@@ -462,14 +562,16 @@ $systemUsage = [
                             </div>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <div class="card">
                                 <div class="card-header">
                                     <h5 class="mb-0">Áreas de Conhecimento (Top 10)</h5>
                                 </div>
                                 <div class="card-body">
                                     <?php if (!empty($areasStats)): ?>
-                                        <canvas id="areasChart"></canvas>
+                                        <div class="chart-container">
+                                            <canvas id="areasChart"></canvas>
+                                        </div>
                                     <?php else: ?>
                                         <p class="text-center text-muted py-4">Sem dados disponíveis</p>
                                     <?php endif; ?>
@@ -480,7 +582,7 @@ $systemUsage = [
 
                     <!-- ========== LISTAS: ÚLTIMOS REGISTOS ========== -->
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-12 col-md-4">
                             <div class="card mb-4">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0">Últimas Monografias</h5>
@@ -511,7 +613,7 @@ $systemUsage = [
                             </div>
                         </div>
                         
-                        <div class="col-md-4">
+                        <div class="col-12 col-md-4">
                             <div class="card mb-4">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0">Últimos Usuários</h5>
@@ -542,7 +644,7 @@ $systemUsage = [
                             </div>
                         </div>
                         
-                        <div class="col-md-4">
+                        <div class="col-12 col-md-4">
                             <div class="card mb-4">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0">Últimas Galerias</h5>
@@ -604,6 +706,7 @@ $systemUsage = [
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         display: false
@@ -638,6 +741,7 @@ $systemUsage = [
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         display: false

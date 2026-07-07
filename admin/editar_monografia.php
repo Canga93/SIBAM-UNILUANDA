@@ -30,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $titulo          = trim($_POST['titulo']);
     $area            = trim($_POST['area']);
+    $curso            = trim($_POST['curso']);
     $resumo          = trim($_POST['resumo']);
     $orientador      = trim($_POST['orientador']);
     $data_publicacao = $_POST['data_publicacao'] ?? null;
@@ -58,13 +59,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $update = $db->prepare("
                 UPDATE monografias SET
-                    titulo = ?, area = ?, resumo = ?, orientador = ?,
+                    titulo = ?, curso = ?, area = ?, resumo = ?, orientador = ?,
                     data_publicacao = ?, palavras_chave = ?, arquivo = ?
                 WHERE id = ?
             ");
 
             $update->execute([
-                $titulo, $area, $resumo, $orientador,
+                $titulo, $curso, $area, $resumo, $orientador,
                 $data_publicacao, $palavras_chave, $arquivo_nome, $id
             ]);
 
@@ -93,121 +94,161 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="../assets/fontawesome/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+    --primary: #2c3e50;
+    --secondary: #34495e;
+    --accent: #3498db;
+    --success: #27ae60;
+    --danger: #e74c3c;
+    --light-bg: #f4f6f9;
+    --border: #dcdfe6;
+    --text-dark: #2c3e50;
+    --text-muted: #6c757d;
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: linear-gradient(120deg, #eef2f7, #dbe4f0);
             min-height: 100vh;
-            padding: 20px 0;
+            padding: 30px 0;
+            color: var(--text-dark);
         }
-        
+
+        /* Card principal */
         .form-container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            background: #ffffff;
+            border-radius: 18px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
             overflow: hidden;
-            margin-top: 20px;
+            border: 1px solid #eef0f4;
         }
-        
+
+        /* Header */
         .form-header {
-            background: linear-gradient(135deg, #2c3e50, #34495e);
-            color: white;
-            padding: 20px 30px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            padding: 25px 35px;
         }
-        
+
         .form-header h2 {
             font-weight: 600;
-            margin: 0;
+            letter-spacing: 0.3px;
         }
-        
+
+        .form-header small {
+            font-weight: 300;
+        }
+
+        /* Corpo */
         .form-body {
-            padding: 30px;
+            padding: 35px;
         }
-        
+
+        /* Labels */
         .form-label {
             font-weight: 500;
-            color: #2c3e50;
-            margin-bottom: 8px;
+            color: var(--primary);
+            margin-bottom: 6px;
         }
-        
-        .form-control, .form-select {
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 10px 15px;
-            transition: all 0.3s ease;
+
+        /* Inputs */
+        .form-control,
+        .form-select {
+            border-radius: 10px;
+            border: 1.8px solid var(--border);
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            transition: all 0.25s ease;
+            background-color: #fff;
         }
-        
-        .form-control:focus, .form-select:focus {
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+
+        .form-control::placeholder {
+            color: #adb5bd;
         }
-        
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.15);
+        }
+
+        /* Textarea */
         textarea.form-control {
-            min-height: 120px;
+            min-height: 140px;
             resize: vertical;
         }
-        
+
+        /* Alertas */
+        .alert-custom {
+            border-radius: 12px;
+            padding: 16px 18px;
+            font-size: 0.95rem;
+        }
+
+        /* Info do arquivo */
+        .file-info {
+            background: var(--light-bg);
+            border-radius: 10px;
+            padding: 15px 18px;
+            border-left: 5px solid var(--accent);
+            font-size: 0.9rem;
+        }
+
+        /* Botões */
         .btn-custom {
-            padding: 10px 25px;
-            weight: 100px;
-            border-radius: 8px;
+            padding: 12px 28px;
+            border-radius: 10px;
             font-weight: 500;
             transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
-        
+
         .btn-back {
             background: #95a5a6;
-            border-color: #95a5a6;
-            color: white;
-            text-decoration: none;
+            border: none;
+            color: #fff;
         }
-        
+
         .btn-back:hover {
             background: #7f8c8d;
-            border-color: #7f8c8d;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
         }
-        
+
         .btn-submit {
-            background: #27ae60;
-            border-color: #27ae60;
-            color: white;
+            background: var(--success);
+            border: none;
+            color: #fff;
         }
-        
+
         .btn-submit:hover {
             background: #229954;
-            border-color: #229954;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
         }
-        
-        .alert-custom {
-            border-radius: 8px;
-            border: none;
-            padding: 15px;
-            margin-bottom: 20px;
+
+        /* Footer */
+        .text-muted small {
+            font-size: 0.85rem;
         }
-        
-        .file-info {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 10px;
-            border-left: 4px solid #3498db;
-        }
-        
+
+        /* Responsivo */
         @media (max-width: 768px) {
             .form-body {
-                padding: 20px;
+                padding: 25px;
             }
-            
+
             .btn-custom {
                 width: 100%;
+                justify-content: center;
                 margin-bottom: 10px;
             }
-            
+
             .d-flex.justify-content-between {
                 flex-direction: column;
+                gap: 10px;
             }
         }
     </style>
@@ -257,16 +298,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Área *</label>
-                                <select class="form-select" name="area" required>
+                                <label class="form-label">Curso *</label>
+                                <select class="form-select" name="curso" required>
                                     <?php
-                                    $areas = [
+                                    $cursos = [
                                         "Engenharia Mecatronica",
                                         "Engenharia dos Transportes",
                                         "Engenharia Informatica",
                                         "Informatica de Gestao",
                                         "Gestao e Logistica",
                                         "Gestao Aeronautica"
+                                    ];
+                                    foreach ($cursos as $c):
+                                    ?>
+                                        <option value="<?= $c ?>" <?= $monografia['curso'] === $c ? 'selected' : '' ?>>
+                                            <?= $c ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                                <label class="form-label">Área *</label>
+                                <select class="form-select" name="area" required>
+                                    <?php
+                                    $areas = [
+                                        "Engenharia",
+                                        "Gestao",
+                                       
                                     ];
                                     foreach ($areas as $a):
                                     ?>
@@ -365,6 +425,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!area.value) {
             e.preventDefault();
             alert('Por favor, selecione uma área.');
+            area.focus();
+            return false;
+        }
+
+        if (!area.value) {
+            e.preventDefault();
+            alert('Por favor, selecione o curso.');
             area.focus();
             return false;
         }

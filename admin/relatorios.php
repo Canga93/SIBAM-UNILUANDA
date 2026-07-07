@@ -202,10 +202,65 @@ if ($export === 'csv') {
         @media print {
             .no-print { display:none !important; }
             .card { box-shadow:none !important; }
+
+            /* ============================================================
+               📠 EFEITO "DOCUMENTO DIGITALIZADO" NA IMPRESSÃO
+               ============================================================ */
+            html, body {
+                background: #efece4 !important;
+            }
+
+            body {
+                filter: grayscale(1) contrast(1.18) brightness(0.96) saturate(0.85);
+                transform: rotate(-0.35deg) scale(1.01);
+                transform-origin: center top;
+                color: #1b1b1b !important;
+            }
+
+            .card {
+                border: 1px solid #555 !important;
+            }
+
+            table, th, td {
+                border-color: #444 !important;
+            }
+
+            .table-striped tbody tr:nth-of-type(odd) {
+                background-color: rgba(0,0,0,0.04) !important;
+            }
+
+            /* Sobreposição de ruído/grão + sombreamento nos cantos, como num scanner real */
+            .scan-overlay {
+                display: block !important;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: 9999;
+                background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.08 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+                background-repeat: repeat;
+                mix-blend-mode: multiply;
+                opacity: 0.6;
+            }
+
+            .scan-overlay::after {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background: radial-gradient(ellipse at center, rgba(0,0,0,0) 50%, rgba(0,0,0,0.22) 100%);
+            }
+        }
+
+        /* Fora da impressão, o efeito fica sempre escondido */
+        .scan-overlay {
+            display: none;
         }
     </style>
 </head>
 <body>
+    <div class="scan-overlay"></div>
     
     <div class="container-fluid py-4">
         <div class="row">
