@@ -1,5 +1,4 @@
 <?php
-
 // Iniciar sessão se não estiver iniciada
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
@@ -10,6 +9,28 @@ $_SESSION['user_foto'] = $_SESSION['user_foto'] ?? 'shine.jpg';
 $_SESSION['user_nome'] = $_SESSION['user_nome'] ?? 'Usuário';
 $_SESSION['user_tipo'] = $_SESSION['user_tipo'] ?? 'visitante';
 
+// Consultar mensagens não lidas para administradores (se logado e admin)
+$unreadMessagesCount = 0;
+$recentUnreadMessages = [];
+if (isLoggedIn() && isAdmin()) {
+    require_once 'config.php'; // Inclui conexão com banco de dados
+    $database = new Database();
+    $db = $database->getConnection();
+    
+    try {
+        // Contar mensagens não lidas
+        $stmt = $db->query("SELECT COUNT(*) FROM mensagens WHERE status = 'nao lida'");
+        $unreadMessagesCount = $stmt->fetchColumn();
+        
+        // Buscar últimas 5 mensagens não lidas para exibir no dropdown
+        $stmt = $db->prepare("SELECT id, nome, assunto, data_envio FROM mensagens WHERE status = 'nao lida' ORDER BY data_envio DESC LIMIT 5");
+        $stmt->execute();
+        $recentUnreadMessages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        // Se a tabela não existir, ignora
+        error_log("Erro ao buscar mensagens: " . $e->getMessage());
+    }
+}
 ?>
 
 <!-- Navbar -->
@@ -34,8 +55,42 @@ $_SESSION['user_tipo'] = $_SESSION['user_tipo'] ?? 'visitante';
                 <?php endif; ?>
             </ul>
         </div>
-        <div class="d-flex">
+        <div class="d-flex align-items-center">
             <?php if (isLoggedIn()): ?>
+               
+                <!-- Notificações para administradores -->
+                <?php if (isAdmin()): ?>
+                <div class="dropdown me-3">
+                    <button class="btn btn-outline-light position-relative" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-bell"></i>
+                        <?php if ($unreadMessagesCount > 0): ?>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                <?php echo $unreadMessagesCount > 9 ? '9+' : $unreadMessagesCount; ?>
+                            </span>
+                        <?php endif; ?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown" style="width: 300px;">
+                        <li><h6 class="dropdown-header">Mensagens não lidas (<?php echo $unreadMessagesCount; ?>)</h6></li>
+                        <?php if (!empty($recentUnreadMessages)): ?>
+                            <?php foreach ($recentUnreadMessages as $msg): ?>
+                                <li>
+                                    <a class="dropdown-item" href="admin/mensagens.php#mensagem-<?php echo $msg['id']; ?>">
+                                        <strong><?php echo htmlspecialchars($msg['nome']); ?></strong>
+                                        <small class="text-muted d-block"><?php echo htmlspecialchars($msg['assunto']); ?></small>
+                                        <small class="text-muted"><?php echo date('d/m H:i', strtotime($msg['data_envio'])); ?></small>
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                            <?php endforeach; ?>
+                            <li><a class="dropdown-item text-center" href="admin/mensagens.php">Ver todas as mensagens</a></li>
+                        <?php else: ?>
+                            <li><span class="dropdown-item-text text-muted">Nenhuma mensagem não lida</span></li>
+                        <?php endif; ?>
+                    </ul>
+                </div>
+                <?php endif; ?>
+
+                <!-- Perfil do usuário -->
                 <div class="dropdown">
                     <button class="btn btn-outline-light dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         <img src="assets/images/avatar/<?php echo htmlspecialchars($_SESSION['user_foto']); ?>" 

@@ -40,38 +40,58 @@
 
                       <div class="col-md-6">
                         <div class="mb-3">
-                          <label class="form-label">Área de Conhecimento *</label>
-                          <select class="form-select" name="area" required>
-                            <option value="" disabled selected>Selecione uma área</option>
+                          <label class="form-label">Cursos *</label>
+                          <select class="form-select" name="curso" required>
+                            <option value="" disabled selected>Selecione o curso</option>
                             <option value="Engenharia Mecatronica" 
-                                    <?php echo (isset($_POST['area']) && $_POST['area'] == 'Engenharia Mecatronica') ? 'selected' : ''; ?>>
+                                    <?php echo (isset($_POST['curso']) && $_POST['curso'] == 'Engenharia Mecatronica') ? 'selected' : ''; ?>>
                               Engenharia Mecatrônica
                             </option>
                             <option value="Engenharia dos Transportes"
-                                    <?php echo (isset($_POST['area']) && $_POST['area'] == 'Engenharia dos Transportes') ? 'selected' : ''; ?>>
+                                    <?php echo (isset($_POST['curso']) && $_POST['curso'] == 'Engenharia dos Transportes') ? 'selected' : ''; ?>>
                               Engenharia dos Transportes
                             </option>
                             <option value="Engenharia Informatica"
-                                    <?php echo (isset($_POST['area']) && $_POST['area'] == 'Engenharia Informatica') ? 'selected' : ''; ?>>
+                                    <?php echo (isset($_POST['curso']) && $_POST['curso'] == 'Engenharia Informatica') ? 'selected' : ''; ?>>
                               Engenharia Informática
                             </option>
                             <option value="Informatica de Gestao"
-                                    <?php echo (isset($_POST['area']) && $_POST['area'] == 'Informatica de Gestao') ? 'selected' : ''; ?>>
+                                    <?php echo (isset($_POST['curso']) && $_POST['curso'] == 'Informatica de Gestao') ? 'selected' : ''; ?>>
                               Informática de Gestão
                             </option>
                             <option value="Gestao e Logistica"
-                                    <?php echo (isset($_POST['area']) && $_POST['area'] == 'Gestao e Logistica') ? 'selected' : ''; ?>>
+                                    <?php echo (isset($_POST['curso']) && $_POST['curso'] == 'Gestao e Logistica') ? 'selected' : ''; ?>>
                               Gestão e Logística
                             </option>
                             <option value="Gestao Aeronautica"
-                                    <?php echo (isset($_POST['area']) && $_POST['area'] == 'Gestao Aeronautica') ? 'selected' : ''; ?>>
+                                    <?php echo (isset($_POST['curso']) && $_POST['curso'] == 'Gestao Aeronautica') ? 'selected' : ''; ?>>
                               Gestão Aeronáutica
                             </option>
                           </select>
-                          <div class="invalid-feedback">Selecione a área de conhecimento.</div>
+                          <div class="invalid-feedback">Selecione um Curso.</div>
                         </div>
                       </div>
                     </div>
+
+                    <div class="row">
+                      <!-- ÁREA -->
+                      <div class="col-md-6">
+                        <div class="mb-3">
+                          <label class="form-label">Área *</label>
+                          <select class="form-select" name="area" id="area" required>
+                            <option value="" disabled selected>Selecione a área</option>
+                            <option value="Engenharia" 
+                                    <?= (isset($_POST['area']) && $_POST['area']=='Engenharia')?'selected':''; ?>>
+                              Engenharia
+                            </option>
+                            <option value="Gestao" 
+                                    <?= (isset($_POST['area']) && $_POST['area']=='Gestao')?'selected':''; ?>>
+                              Gestão
+                            </option>
+                          </select>
+                          <div class="invalid-feedback">Selecione uma área.</div>
+                        </div>
+                      </div>
 
                     <div class="mb-3">
                       <label class="form-label">Resumo *</label>
