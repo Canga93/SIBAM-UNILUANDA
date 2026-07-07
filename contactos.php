@@ -1,30 +1,33 @@
 <?php
 require_once 'includes/config.php';
 
+// Obter conexão com o banco de dados
+$database = new Database();
+$db = $database->getConnection();
+
 $message = '';
 
 // Processar formulário de contacto
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nome = sanitizeInput($_POST['nome']);
-    $email = sanitizeInput($_POST['email']);
-    $assunto = sanitizeInput($_POST['assunto']);
-    $mensagem = sanitizeInput($_POST['mensagem']);
+    $nome = trim($_POST['nome'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $id = trim($_POST['id'] ?? '');
+    $assunto = trim($_POST['assunto'] ?? '');
+    $mensagem = trim($_POST['mensagem'] ?? '');
     
     // Validação básica
     if (empty($nome) || empty($email) || empty($assunto) || empty($mensagem)) {
         $message = '<div class="alert alert-danger">Por favor, preencha todos os campos.</div>';
-    } elseif (!isValidEmail($email)) {
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $message = '<div class="alert alert-danger">Por favor, informe um email válido.</div>';
     } else {
-        // Simular envio de email (em produção, integrar com sistema de email)
-        $to = "sibam@uniluanda.edu.ao";
-        $subject = "Contacto via SIBAM: $assunto";
-        $body = "Nome: $nome\nEmail: $email\n\nMensagem:\n$mensagem";
-        $headers = "From: $email";
+        // Inserir no banco de dados
+        $ip = $_SERVER['REMOTE_ADDR'];
+        $usuario_id = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] ? $_SESSION['user_id'] : null;
         
-        // Em ambiente real, usar mail() ou biblioteca de email
-        // if (mail($to, $subject, $body, $headers)) {
-        if (true) { // Simulação de sucesso
+        $stmt = $db->prepare("INSERT INTO mensagens (nome, email, id, assunto, mensagem, ip) VALUES (?, ?, ?, ?, ?, ?)");
+        
+        if ($stmt->execute([$nome, $email, $id, $assunto, $mensagem, $ip])) {
             $message = '<div class="alert alert-success">Mensagem enviada com sucesso! Entraremos em contacto em breve.</div>';
             $_POST = array(); // Limpar formulário
         } else {
@@ -33,13 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="pt-pt">
 <head>
     <?php include 'includes/head.php'; ?>
     <title>Contactos - SIBAM UNILUANDA</title>
-</head>
 <style>
     :root {
         --primary-color: #2c3e50;
@@ -97,12 +98,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     .hero-section {
-        background: linear-gradient(rgba(44, 62, 80, 0.9), rgba(44, 62, 80, 0.9)), url('assets/images/hero-bg.jpg');
+        background: linear-gradient(rgba(28, 39, 50, 0.9), rgba(39, 55, 72, 0.9)), url('assets/images/ipgest.png');
         background-size: cover;
         background-position: center;
-        color: white;
+        color: #fff;
         padding: 5rem 0;
-        margin-bottom: 3rem;
+        margin-bottom: 5rem;
     }
     
     .hero-title {
@@ -218,7 +219,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .animate-delay-3 {
         animation-delay: 0.6s;
     }
+
+    /* Estilo para o dropdown de notificações */
+    .notification-dropdown {
+        width: 300px;
+    }
+    .notification-item {
+        white-space: normal;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .notification-item:last-child {
+        border-bottom: none;
+    }
 </style>
+</head>
 <body>
     <?php include 'includes/header.php'; ?>
     
@@ -231,6 +245,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 
                 <div class="row">
+                    <!-- Cards de contacto -->
                     <div class="col-md-6 mb-4">
                         <div class="card h-100 shadow-sm">
                             <div class="card-body text-center">
@@ -283,13 +298,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <div class="col-md-6 mb-3">
                                     <label for="nome" class="form-label">Nome Completo *</label>
                                     <input type="text" class="form-control" id="nome" name="nome" 
-                                           value="<?php echo $_POST['nome'] ?? ''; ?>" required>
+                                           value="<?php echo htmlspecialchars($_POST['nome'] ?? ''); ?>" required>
                                     <div class="invalid-feedback">Por favor, informe seu nome.</div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="email" class="form-label">Email *</label>
                                     <input type="email" class="form-control" id="email" name="email" 
-                                           value="<?php echo $_POST['email'] ?? ''; ?>" required>
+                                           value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" required>
                                     <div class="invalid-feedback">Por favor, informe um email válido.</div>
                                 </div>
                             </div>
@@ -297,13 +312,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="mb-3">
                                 <label for="assunto" class="form-label">Assunto *</label>
                                 <input type="text" class="form-control" id="assunto" name="assunto" 
-                                       value="<?php echo $_POST['assunto'] ?? ''; ?>" required>
+                                       value="<?php echo htmlspecialchars($_POST['assunto'] ?? ''); ?>" required>
                                 <div class="invalid-feedback">Por favor, informe o assunto.</div>
                             </div>
                             
                             <div class="mb-3">
                                 <label for="mensagem" class="form-label">Mensagem *</label>
-                                <textarea class="form-control" id="mensagem" name="mensagem" rows="5" required><?php echo $_POST['mensagem'] ?? ''; ?></textarea>
+                                <textarea class="form-control" id="mensagem" name="mensagem" rows="5" required><?php echo htmlspecialchars($_POST['mensagem'] ?? ''); ?></textarea>
                                 <div class="invalid-feedback">Por favor, escreva sua mensagem.</div>
                             </div>
                             
@@ -318,5 +333,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
     
     <?php include 'includes/footer.php'; ?>
+    
+    <script>
+        // Validação do formulário com Bootstrap
+        (function() {
+            'use strict';
+            window.addEventListener('load', function() {
+                var forms = document.getElementsByClassName('needs-validation');
+                Array.prototype.filter.call(forms, function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+    </script>
 </body>
 </html>

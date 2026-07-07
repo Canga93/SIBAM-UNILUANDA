@@ -1,117 +1,131 @@
 <?php
 require_once 'includes/config.php';
+require_once 'includes/header.php';
 
-// Configuração de paginação
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$limit = 10;
-$offset = ($page - 1) * $limit;
-
-// Filtros de busca
-$search = isset($_GET['search']) ? sanitizeInput($_GET['search']) : '';
-$area = isset($_GET['area']) ? sanitizeInput($_GET['area']) : '';
-$ano = isset($_GET['ano']) ? sanitizeInput($_GET['ano']) : '';
-
-// Construir query
-$query = "SELECT m.*, u.nome as autor FROM monografias m 
-          LEFT JOIN usuarios u ON m.autor_id = u.id 
-          WHERE 1=1";
-$params = [];
-
-if (!empty($search)) {
-    $query .= " AND (m.titulo LIKE :search OR m.resumo LIKE :search OR u.nome LIKE :search)";
-    $params[':search'] = "%$search%";
+/*
+FUNÇÃO DE LIMPEZA
+*/
+function limpar($v){
+    return trim(strip_tags($v ?? ''));
 }
 
-if (!empty($area)) {
-    $query .= " AND m.area = :area";
+/*
+PAGINAÇÃO
+*/
+$page   = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$limit  = 8;
+$offset = ($page - 1) * $limit;
+
+/*
+FILTROS
+*/
+$search     = limpar($_GET['search'] ?? '');
+$area       = limpar($_GET['area'] ?? '');
+$curso      = limpar($_GET['curso'] ?? '');
+$tipo       = limpar($_GET['tipo'] ?? '');
+$orientador = limpar($_GET['orientador'] ?? '');
+$ano_ini    = limpar($_GET['ano_ini'] ?? '');
+$ano_fim    = limpar($_GET['ano_fim'] ?? '');
+$ordenar    = limpar($_GET['ordenar'] ?? 'data');
+
+/*
+QUERY BASE - Incluímos o nome do tutor (orientador)
+*/
+$sql = "
+SELECT m.*, u.nome AS autor
+FROM monografias m
+LEFT JOIN usuarios u ON u.id = m.autor_id
+WHERE 1=1
+";
+
+$params = [];
+
+/*
+BUSCA AVANÇADA (FULLTEXT)
+*/
+if ($search) {
+    $sql .= " AND MATCH(m.titulo, m.resumo, m.palavras_chave)
+              AGAINST (:search IN BOOLEAN MODE)";
+    $params[':search'] = $search;
+}
+
+/*
+FILTROS FACETADOS
+*/
+if ($area) {
+    $sql .= " AND m.area = :area";
     $params[':area'] = $area;
 }
 
-if (!empty($ano)) {
-    $query .= " AND YEAR(m.data_publicacao) = :ano";
-    $params[':ano'] = $ano;
+if ($curso) {
+    $sql .= " AND m.curso = :curso";
+    $params[':curso'] = $curso;
 }
 
-// Contar total de registros
-$countQuery = "SELECT COUNT(*) as total FROM monografias m 
-               LEFT JOIN usuarios u ON m.autor_id = u.id 
-               WHERE 1=1";
-
-if (!empty($search)) {
-    $countQuery .= " AND (m.titulo LIKE :search OR m.resumo LIKE :search OR u.nome LIKE :search)";
+if ($tipo) {
+    $sql .= " AND m.tipo_documento = :tipo";
+    $params[':tipo'] = $tipo;
 }
 
-if (!empty($area)) {
-    $countQuery .= " AND m.area = :area";
+if ($orientador) {
+    $sql .= " AND m.orientador LIKE :orientador";
+    $params[':orientador'] = "%$orientador%";
 }
 
-if (!empty($ano)) {
-    $countQuery .= " AND YEAR(m.data_publicacao) = :ano";
+if ($ano_ini && $ano_fim) {
+    $sql .= " AND YEAR(m.data_publicacao) BETWEEN :ai AND :af";
+    $params[':ai'] = $ano_ini;
+    $params[':af'] = $ano_fim;
 }
 
-$stmt = $db->prepare($countQuery);
+/*
+ORDENAÇÃO
+*/
+$sql .= ($ordenar === 'titulo')
+      ? " ORDER BY m.titulo ASC"
+      : " ORDER BY m.data_publicacao DESC";
 
-if (!empty($search)) {
-    $stmt->bindValue(':search', "%$search%", PDO::PARAM_STR);
+/*
+PAGINAÇÃO
+*/
+$sql .= " LIMIT :limit OFFSET :offset";
+
+/*
+EXECUÇÃO
+*/
+$stmt = $db->prepare($sql);
+
+foreach ($params as $k => $v) {
+    $stmt->bindValue($k, $v);
 }
 
-if (!empty($area)) {
-    $stmt->bindValue(':area', $area, PDO::PARAM_STR);
-}
-
-if (!empty($ano)) {
-    $stmt->bindValue(':ano', $ano, PDO::PARAM_INT);
-}
-
-$stmt->execute();
-$totalRecords = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-$totalPages = ceil($totalRecords / $limit);
-
-// Adicionar paginação e ordenação
-$query .= " ORDER BY m.data_publicacao DESC LIMIT :limit OFFSET :offset";
-
-// Executar query
-$stmt = $db->prepare($query);
-
-// Bind dos parâmetros de busca
-if (!empty($search)) {
-    $stmt->bindValue(':search', "%$search%", PDO::PARAM_STR);
-}
-
-if (!empty($area)) {
-    $stmt->bindValue(':area', $area, PDO::PARAM_STR);
-}
-
-if (!empty($ano)) {
-    $stmt->bindValue(':ano', $ano, PDO::PARAM_INT);
-}
-
-// Bind dos parâmetros de paginação (importante especificar o tipo como INT)
 $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
 $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-
 $stmt->execute();
+
 $monografias = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Obter áreas distintas para filtro
-$areasQuery = "SELECT DISTINCT area FROM monografias WHERE area IS NOT NULL ORDER BY area";
-$areasStmt = $db->query($areasQuery);
-$areas = $areasStmt->fetchAll(PDO::FETCH_COLUMN);
+/*
+TOTAL REGISTROS
+*/
+$total = $db->query("SELECT COUNT(*) FROM monografias")->fetchColumn();
+$totalPages = ceil($total / $limit);
 
-// Obter anos distintos para filtro
-$anosQuery = "SELECT DISTINCT YEAR(data_publicacao) as ano FROM monografias 
-              WHERE data_publicacao IS NOT NULL ORDER BY ano DESC";
-$anosStmt = $db->query($anosQuery);
-$anos = $anosStmt->fetchAll(PDO::FETCH_COLUMN);
+/*
+DADOS PARA FILTROS
+*/
+$areas  = $db->query("SELECT DISTINCT area FROM monografias")->fetchAll(PDO::FETCH_COLUMN);
+$cursos = $db->query("SELECT DISTINCT curso FROM monografias")->fetchAll(PDO::FETCH_COLUMN);
 ?>
 
 <!DOCTYPE html>
 <html lang="pt-pt">
 <head>
-    <?php include 'includes/head.php'; ?>
-    <title>Monografias - SIBAM UNILUANDA</title>
+    <meta charset="UTF-8">
+    <title>SIBAM-UNILUANDA | Busca Avançada</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-    :root {
+        :root {
         --primary-color: #2c3e50;
         --secondary-color: #3498db;
         --accent-color: #e74c3c;
@@ -167,12 +181,12 @@ $anos = $anosStmt->fetchAll(PDO::FETCH_COLUMN);
     }
     
     .hero-section {
-        background: linear-gradient(rgba(44, 62, 80, 0.9), rgba(44, 62, 80, 0.9)), url('assets/images/hero-bg.jpg');
+        background: linear-gradient(rgba(28, 39, 50, 0.9), rgba(39, 55, 72, 0.9)), url('assets/images/ipgest.png');
         background-size: cover;
         background-position: center;
-        color: white;
+        color: #fff;
         padding: 5rem 0;
-        margin-bottom: 3rem;
+        margin-bottom: 5rem;
     }
     
     .hero-title {
@@ -281,6 +295,7 @@ $anos = $anosStmt->fetchAll(PDO::FETCH_COLUMN);
         animation-delay: 0.2s;
     }
     
+                   
     .animate-delay-2 {
         animation-delay: 0.4s;
     }
@@ -288,160 +303,122 @@ $anos = $anosStmt->fetchAll(PDO::FETCH_COLUMN);
     .animate-delay-3 {
         animation-delay: 0.6s;
     }
-        .card {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            border: none;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
-        
-        .pagination .page-link {
-            border-radius: 5px;
-            margin: 0 3px;
-            border: none;
-        }
-        
-        .pagination .page-item.active .page-link {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-        }
-        
-        .filter-card {
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            border: none;
-            border-radius: 10px;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            border: none;
-            border-radius: 5px;
-        }
-        
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #2980b9, #3498db);
-            transform: translateY(-2px);
-        }
-        
-        .card-title {
-            color: #2c3e50;
-            font-weight: 600;
-        }
-        
-        .card-text {
-            color: #6c757d;
-        }
+    
+        .card:hover { transform: translateY(-4px); transition:.2s; 
+    }
     </style>
+
 </head>
 <body>
-    <?php include 'includes/header.php'; ?>
-    
     <div class="container py-5">
-        <h1 class="text-center mb-5">Acervo de Monografias</h1>
-        
-        <!-- Filtros -->
-        <div class="card mb-4 filter-card">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filtros de Busca</h5>
-            </div>
-            <div class="card-body">
-                <form method="GET" class="row g-3">
+
+        <h2 class="mb-4 text-center">📚 Acervo Académico | UNILUANDA-IPGEST</h2>
+        <hr>
+
+        <!--
+        FILTROS AVANÇADOS
+        -->
+        <form method="GET" class="card p-4 shadow-sm mb-4">
+            <div class="row g-3">
+
                     <div class="col-md-4">
-                        <input type="text" class="form-control" name="search" placeholder="Buscar por título, resumo ou autor..." value="<?php echo htmlspecialchars($search); ?>">
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select" name="area">
-                            <option value="">Todas as áreas</option>
-                            <?php foreach ($areas as $areaOption): ?>
-                                <option value="<?php echo $areaOption; ?>" <?php echo $area == $areaOption ? 'selected' : ''; ?>>
-                                    <?php echo $areaOption; ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select" name="ano">
-                            <option value="">Todos os anos</option>
-                            <?php foreach ($anos as $anoOption): ?>
-                                <option value="<?php echo $anoOption; ?>" <?php echo $ano == $anoOption ? 'selected' : ''; ?>>
-                                    <?php echo $anoOption; ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search me-2"></i>Buscar</button>
-                    </div>
-                </form>
+                    <input name="search" class="form-control" placeholder="Palavra-chave (título, resumo, autor)">
+                </div>
+
+                <div class="col-md-2">
+                    <select name="area" class="form-select">
+                        <option value="">Área</option>
+                        <?php foreach($areas as $a): ?>
+                        <option value="<?= $a ?>"><?= $a ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <select name="curso" class="form-select">
+                        <option value="">Curso</option>
+                        <?php foreach($cursos as $c): ?>
+                        <option value="<?= $c ?>"><?= $c ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="col-md-1">
+                    <input type="number" name="ano_ini" class="form-control" placeholder="De">
+                </div>
+
+                <div class="col-md-1">
+                    <input type="number" name="ano_fim" class="form-control" placeholder="Até">
+                </div>
+
+                <div class="col-md-3">
+                    <input name="orientador" class="form-control" placeholder="Orientador">
+                </div>
+
+                <div class="col-md-3">
+                    <select name="ordenar" class="form-select">
+                        <option value="data">Mais recentes</option>
+                        <option value="titulo">Título (A-Z)</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <button class="btn btn-success w-100">🔍 Filtrar</button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-warning w-100">🔍 Limpar</button>
+                </div>
+
             </div>
-        </div>
-        
-        <!-- Resultados -->
-        <div class="mb-4">
-            <p class="text-muted">Encontradas <?php echo $totalRecords; ?> monografia(s)</p>
-        </div>
-        
-        <!-- Lista de Monografias -->
-        <?php if (count($monografias) > 0): ?>
-            <div class="row">
-                <?php foreach ($monografias as $monografia): ?>
-                    <div class="col-md-6 mb-4">
-                        <div class="card h-100 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title"><?php echo htmlspecialchars($monografia['titulo']); ?></h5>
-                                <h6 class="card-subtitle mb-2 text-muted">Por: <?php echo htmlspecialchars($monografia['autor']); ?></h6>
-                                <p class="card-text"><?php echo substr(htmlspecialchars($monografia['resumo']), 0, 150); ?>...</p>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">
-                                        <i class="fas fa-calendar me-1"></i><?php echo formatDate($monografia['data_publicacao']); ?>
-                                        <i class="fas fa-tag ms-3 me-1"></i><?php echo htmlspecialchars($monografia['area']); ?>
-                                    </small>
-                                    <a href="detalhes_monografia.php?id=<?php echo $monografia['id']; ?>" class="btn btn-sm btn-outline-primary">Ver Detalhes</a>
-                                </div>
-                            </div>
+        </form>
+
+        <!--
+        RESULTADOS
+        -->
+        <p class="text-muted">Total de resultados: <strong><?= $total ?></strong></p>
+
+        <div class="row">
+            <?php foreach($monografias as $m): ?>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5><?= htmlspecialchars($m['titulo']) ?></h5>
+                        <p class="text-muted mb-1">
+                            <?= $m['autor'] ?> | <?= $m['curso'] ?>
+                        </p>
+                        <!-- Nome do tutor (orientador) -->
+                        <p class="text-muted mb-2">
+                            <strong>Tutor:</strong> <?= htmlspecialchars($m['orientador'] ?? 'Não informado') ?>
+                        </p>
+                        <p><?= substr(strip_tags($m['resumo']),0,150) ?>...</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <?= $m['area'] ?> | <?= date('Y', strtotime($m['data_publicacao'])) ?>
+                            </small>
+                            <!-- Botão Ver detalhes -->
+                            <a href="detalhes_monografia.php?id=<?= $m['id'] ?>" class="btn btn-sm btn-primary">Ver detalhes</a>
                         </div>
                     </div>
-                <?php endforeach; ?>
+                </div>
             </div>
-            
-            <!-- Paginação -->
-            <?php if ($totalPages > 1): ?>
-                <nav class="mt-4">
-                    <ul class="pagination justify-content-center">
-                        <?php if ($page > 1): ?>
-                            <li class="page-item">
-                                <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>">Anterior</a>
-                            </li>
-                        <?php endif; ?>
-                        
-                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                            <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
-                                <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>"><?php echo $i; ?></a>
-                            </li>
-                        <?php endfor; ?>
-                        
-                        <?php if ($page < $totalPages): ?>
-                            <li class="page-item">
-                                <a class="page-link" href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page + 1])); ?>">Próxima</a>
-                            </li>
-                        <?php endif; ?>
-                    </ul>
-                </nav>
-            <?php endif; ?>
-            
-        <?php else: ?>
-            <div class="text-center py-5">
-                <i class="fas fa-search fa-3x text-muted mb-3"></i>
-                <h4 class="text-muted">Nenhuma monografia encontrada</h4>
-                <p class="text-muted">Tente ajustar os filtros de busca</p>
-            </div>
-        <?php endif; ?>
+            <?php endforeach; ?>
+        </div>
+
+        <!--
+        PAGINAÇÃO
+        -->
+          <hr>
+        <nav>
+            <ul class="pagination justify-content-center">
+                <?php for($i=1;$i<=$totalPages;$i++): ?>
+            <li class="page-item <?= $i==$page?'active':'' ?>">
+                <a class="page-link" href="?<?= http_build_query(array_merge($_GET,['page'=>$i])) ?>"><?= $i ?></a>
+            </li>
+                <?php endfor; ?>
+            </ul>
+        </nav>
+      
+
     </div>
-    
-    <?php include 'includes/footer.php'; ?>
 </body>
 </html>
